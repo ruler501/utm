@@ -402,10 +402,54 @@ def decrement(pos,nextstate,errorstate,i):
     outStr += nextstate+",0,-\n\n"
     curPos = pos
     return outStr
+
+def pop(pos,nextstate,errorstate,i):
+    global curPos
+    if pos in popped:
+        return pope(pos,nextstate,errorstate,i)
+    outStr = moveV(pos+1,"startp"+str(i),"<",i)
+    outStr += "startp"+str(i)+",0\n"
+    outStr += "checkp"+str(i)+",_,<\n\n"
+    outStr += "startp"+str(i)+",1\n"
+    outStr += "checkp"+str(i)+",_,<\n\n"
+    outStr += "checkp"+str(i)+",_\n"
+    outStr += errorstate+",_,>\n\n"
+    outStr += "checkp"+str(i)+",0\n"
+    outStr += nextstate+",0,-\n\n"
+    outStr += "checkp"+str(i)+",1\n"
+    outStr += nextstate+",1,-\n\n"
+    for k in variables:
+        if variables[k] > pos:
+            variables[k] += 1
+    for i in range(len(popped)):
+        if popped[i] > pos:
+            popped[i] += 1
+    curPos = pos
+    popped.append(pos)
+    return outStr
+
+def pope(pos,nextstate,errorstate,i):
+    global curPos
+    outStr = moveV(pos+1,"startpp"+str(i),"-",i)
+    outStr += "startpp"+str(i)+",_\n"
+    outStr += "startp"+str(i)+",0,<\n\n"
+    outStr += "startp"+str(i)+",0\n"
+    outStr += "checkp"+str(i)+",_,<\n\n"
+    outStr += "startp"+str(i)+",1\n"
+    outStr += "checkp"+str(i)+",_,<\n\n"
+    outStr += "checkp"+str(i)+",_\n"
+    outStr += errorstate+",_,>\n\n"
+    outStr += "checkp"+str(i)+",0\n"
+    outStr += nextstate+",0,-\n\n"
+    outStr += "checkp"+str(i)+",1\n"
+    outStr += nextstate+",1,-\n\n"
+    curPos = pos
+    return outStr
     
 inFile = open("UTM.utm")
 out = open("UTM.utmo","w")
-functions = {'incr': increment, 'decr': decrement}
+functions = {'incr': increment, 'decr': decrement, "pop": pop}
+popped = []
 inLines=inFile.readlines()#[:-1]
 
 out.write("name: Auto-Generated\ninit: start0\naccept: end\n\n")
@@ -438,7 +482,7 @@ for lineno in range(len(inLines)):
                     for loop in whileLoops:
                         if loop[1] < i and loop[2] > i:
                             nested = True
-                    whileLoops.append((len(whileLoops), lineno, endno-1, vposition, function, nested))                    
+                    whileLoops.append((len(whileLoops), lineno, endno-1, vposition, function, nested))  
                     if nested:
                         if endno == len(inLines) - 1:
                             out.write(functions[function](vposition, "start"+str(i+1), "end",i))
@@ -516,20 +560,42 @@ for lineno in range(len(inLines)):
     for loop in whileLoops:
         if lineno == loop[2]:
             if loop[5]:
-                out.write(functions[function](variables[variable], "startn"+str(loop[1]), "start"+str(loop[1]), i))
-                out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                if loop[4] == "pop":
+                    curPos -= 1
+                    out.write(functions[function](variables[variable], "startnp"+str(loop[1]), "startnp"+str(loop[1]), i))
+                    t = curPos
+                    out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                    curPos = t+1
+                    out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
+                else:
+                    out.write(functions[function](variables[variable], "startn"+str(loop[1]), "start"+str(loop[1]), i))
+                    out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
                 break
             else:
-                out.write(functions[function](variables[variable], "start"+str(loop[1]), "start"+str(loop[1]), i))
-                if endno == len(inLines) - 1:
-                    out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
+                if loop[4] == "pop":
+                    curPos -= 1
+                    out.write(functions[function](variables[variable], "startnp"+str(loop[1]), "startnp"+str(loop[1]), i))
+                    t = curPos
+                    if endno == len(inLines) - 1:
+                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
+                        curPos = t+1
+                        out.write(pope(loop[3], "start"+str(loop[1]+1), "end","np"+str(loop[1])))
+                    else:
+                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
+                        curPos = t+1
+                        out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
+                    break
+
                 else:
-                    out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
-                break
+                    out.write(functions[function](variables[variable], "start"+str(loop[1]), "start"+str(loop[1]), i))
+                    if endno == len(inLines) - 1:
+                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
+                    else:
+                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
+                    break
     else:
         if lineno == len(inLines)-1:
             out.write(functions[function](variables[variable], "end", "end", i))
         else:
             out.write(functions[function](variables[variable], "start"+str(i+1), "start"+str(i+1), i))
     i += 1
-    
