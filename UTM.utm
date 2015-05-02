@@ -1,6 +1,4 @@
-while i incr count1{
-	incr(i)
+a=8,4
+while i decr {
+    decr(a)
 }
-a=i,5
-decr(a)
-b=a,5

@@ -28,9 +28,13 @@ creates a new variable a equal to i, you cannot assign to an existing variable.
 	a = i,5
 creates a new variable a equal to i, with 5 extra bits.
 
+###Assignment of a Constant
+    a = 35,6
+Creates a new variable a equal to 35%(2**6), in 6 bits
+
 ##Syntax of the Output
-[current_state],[current_symbol]
-[new_state],[new_symbol], [> or < or -]
+    [current_state],[current_symbol]
+    [new_state],[new_symbol], [> or < or -]
 
 ##Example
 For a working example see UTM.utm in this repository

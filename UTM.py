@@ -1,3 +1,4 @@
+import math
 import operator
 from collections import deque
 
@@ -133,6 +134,25 @@ def copyVresize(opos, newpos, resize, nextstate, i):
     outStr += copyV(opos,newpos,nextstate,"c"+str(i))
     return outStr
         
+def outputConstant(pos,nextstate,constant,i,width):
+    global curPos
+    outStr = moveV(pos,"starto"+str(i),">",i)
+    b = '{:0{width}b}'.format(constant%(2**width), width=width)
+    outStr += "starto"+str(i)+",_\n"
+    if len(b) > 1:
+        outStr += "output1c"+b[1]+str(i)+","+b[0]+",>\n\n"
+    else:
+        outStr += nextstate+","+b[0]+",-\n\n"
+    for j in range(1,len(b)-1):
+        outStr += "output"+str(j)+"c"+b[j]+str(i)+",_\n"
+        outStr += "output"+str(j+1)+"c"+b[j+1]+str(i)+","+b[j]+",>\n\n"
+    if len(b) > 1:
+        outStr += "output"+str(len(b)-1)+"c"+b[-1]+str(i)+",_\n"
+        outStr += nextstate+","+b[-1]+",-\n\n"
+    curPos = pos
+    return outStr
+    
+
 def increment(pos,nextstate,errorstate,i):
     global curPos
     outStr = moveV(pos+1,"starti"+str(i),"<",i)
@@ -208,7 +228,15 @@ for lineno in range(len(inLines)):
                         i+=1
                         continue
                     else:
-                        raise NameError(variable.split(',')[0]+" is not a defined variable")
+                        constant = int(variable.split(',')[0])
+                        variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                        if i == len(inLines) - 1:
+                            out.write(outputConstant(variables[pieces[0]],"end",constant,i,allocatedSpace))
+                        else:
+                            out.write(outputConstant(variables[pieces[0]],"start"+str(i+1),constant,i,allocatedSpace))
+                        i+=1
+                        continue
+                        
                 except ValueError:
                     raise NameError(variable+" is not a defined variable")
             else:
