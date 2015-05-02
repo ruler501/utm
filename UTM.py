@@ -19,9 +19,7 @@ curPos = 0
 
 def moveV(pos,nextstate,movedirection,i):
     global curPos
-    vposition = max(variables.items(), key=operator.itemgetter(1))[1]+1
     outStr = ""
-    variables["mv"+str(i)] = vposition
     if pos > curPos:
         if pos - curPos > 1:
             outStr += "moveright0mv"+str(i)+",_\n"
@@ -41,15 +39,19 @@ def moveV(pos,nextstate,movedirection,i):
         outStr += "start"+str(i)+",1\n"
         outStr += "start"+str(i)+",1,>\n\n"
     elif pos < curPos:
-        outStr += "moveleft0mv"+str(i)+",_\n"
-        outStr += nextstate+",_,"+movedirection+'\n\n'
-        outStr += moveleft.replace("{{i}}","0").replace("{{j}}",str(i))
+        if curPos-pos > 1:
+            outStr += "moveleft0mv"+str(i)+",_\n"
+            outStr += nextstate+",_,"+movedirection+'\n\n'
+            outStr += moveleft.replace("{{i}}","0").replace("{{j}}",str(i))
         for j in range(1,curPos-pos):
             outStr += "moveleft"+str(j)+"mv"+str(i)+",_\n"
             outStr += "moveleft"+str(j-1)+"mv"+str(i)+',_,<\n\n'
             outStr += moveleft.replace("{{i}}",str(j)).replace("{{j}}",str(i))
         outStr += "start"+str(i)+",_\n"
-        outStr += "moveleft"+str(curPos-pos-2)+"mv"+str(i)+",_,<\n\n"
+        if curPos-pos > 1:
+            outStr += "moveleft"+str(curPos-pos-2)+"mv"+str(i)+",_,<\n\n"
+        else:
+            outStr += nextstate+",_,"+movedirection+'\n\n'
         outStr += "start"+str(i)+",0\n"
         outStr += "start"+str(i)+",0,<\n\n"
         outStr += "start"+str(i)+",1\n"
@@ -66,17 +68,15 @@ def moveV(pos,nextstate,movedirection,i):
     
 def copyV(opos, newpos, nextstate, i):
     global curPos
-    vposition = max(variables.items(), key=operator.itemgetter(1))[1]+1
     outStr = ""
     if opos <= curPos:
-        outStr = moveV(opos,"startcv"+str(i),">",i)
+        outStr = moveV(opos-1,"startcv"+str(i),">",i)
     elif opos > curPos:
         outStr = moveV(opos,"startcv"+str(i),"<",i)
     curPos = newpos+1
     outStr += moveV(opos,"startcvc0"+str(i),"-","c0m"+str(i))
     curPos = newpos+1
     outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
-    variables["cv"+str(i)] = newpos
     if newpos > opos:
         outStr += "startcv"+str(i)+",_\n"
         outStr += nextstate+",_,>\n\n"
@@ -116,6 +116,23 @@ def copyV(opos, newpos, nextstate, i):
     curPos = opos+1
     return outStr
     
+def copyVresize(opos, newpos, resize, nextstate, i):
+    global curPos
+    outStr = moveV(newpos, "startcvr"+str(i), ">", i)
+    outStr += "startcvr"+str(i)+",_\n"
+    if resize > 1:
+        outStr += "out"+str(resize-2)+"c0"+str(i)+",0,>\n\n"
+        outStr += "out0c0"+str(i)+",_\n"
+        outStr += "startc"+str(i)+",0,-\n\n"
+    else:
+        outStr += "startc"+str(i)+",0,-\n\n"
+    for j in range(1,resize):
+        outStr += "out"+str(j)+"c0"+str(i)+",_\n"
+        outStr += "out"+str(j-1)+"c0"+str(i)+",0,>\n\n"
+    curPos = newpos
+    outStr += copyV(opos,newpos,nextstate,"c"+str(i))
+    return outStr
+        
 def increment(pos,nextstate,errorstate,i):
     global curPos
     outStr = moveV(pos+1,"starti"+str(i),"<",i)
@@ -145,11 +162,14 @@ out = open("UTM.utmo","w")
 functions = {'incr': increment, 'decr': decrement}
 inLines=inFile.readlines()
 
+out.write("name: Auto-Generated\ninit: start0\naccept: end\n\n")
+
 i=0
 whileLoops = deque()
 for lineno in range(len(inLines)):
     line = inLines[lineno].strip()
     if line == "}":
+        i += 1
         continue
     if line[:5] == "while":
         pieces = line.split()
@@ -159,13 +179,45 @@ for lineno in range(len(inLines)):
         function = pieces[2]
         counter = pieces[3][:-1]
         for endno in range(lineno+1,len(inLines)):
-            if inLines[endno] == "}":
+            if inLines[endno].strip() == "}":
                 whileLoops.append((len(whileLoops), lineno, endno-1, counter))
-                out.write(functions[function](vposition, "start"+str(i+1), "start"+str(endno+1),i))
+                if endno == len(inLines) - 1:
+                    out.write(functions[function](vposition, "start"+str(i+1), "end",i))
+                else:
+                    out.write(functions[function](vposition, "start"+str(i+1), "start"+str(endno+1),i))
                 break
         else:
             raise SyntaxError("While loop never finished")
         i+=1
+        continue
+    if "=" in line:
+        pieces = line.split("=")
+        if pieces[0] in variables:
+            raise NameError("Can't copy over an existing variable, "+pieces[0]+" already exists")
+        variable = pieces[1]
+        if variable not in variables:
+            if "," in variable:
+                try:
+                    allocatedSpace = int(variable.split(',')[1])
+                    if variable.split(',')[0] in variables:
+                        variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                        if i == len(inLines) - 1:
+                            out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"end",i))
+                        else:
+                            out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
+                        continue
+                    else:
+                        raise NameError(variable.split(',')[0]+" is not a defined variable")
+                except ValueError:
+                    raise NameError(variable+" is not a defined variable")
+            else:
+                raise NameError(variable+" is not a defined variable")
+        variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+        if i == len(inLines) - 1:
+            out.write(copyV(variables[variable],variables[pieces[0]],"end",i))
+        else:
+            out.write(copyV(variables[variable],variables[pieces[0]],"start"+str(i+1),i))
+        i += 1
         continue
     function = line.split('(')[0]
     variable = line.split('(')[1][:-1]
@@ -178,9 +230,12 @@ for lineno in range(len(inLines)):
             raise NameError(variable+" is not a defined variable")
     for loop in whileLoops:
         if i == loop[2]:
-            out.write(functions[function](variables[variable], "start"+str(loop[1]), "reject", i))
+            out.write(functions[function](variables[variable], "start"+str(loop[1]), "start"+str(loop[1]), i))
             break
     else:
-        out.write(functions[function](variables[variable], "start"+str(i+1), "reject", i))
+        if lineno == len(inLines)-1:
+            out.write(functions[function](variables[variable], "end", "end", i))
+        else:
+            out.write(functions[function](variables[variable], "start"+str(i+1), "start"+str(loop[1]), i))
     i += 1
     

@@ -1,3 +1,3 @@
 while i incr count1{
-	decr(i)
+	a = i,5
 }
