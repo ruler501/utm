@@ -7,10 +7,10 @@ down to a Turing machine with the syntax of [Turing Machine Simulator](https://m
 on each line you can do one of 4 things, you can loop, increment a variable, decrement a variable or create a copy of a variable
 
 ###While loop:
-	while i decr count{
+	while i decr {
 		...
 	}
-Means while i is not all zero's subtract one then do the block. Count is a prefix to all your variables that changes each iteration
+Means while i is not all zero's subtract one then do the block. For increment it is while i is not all ones. Both flip the bits when done(incr end with all 0's decr all 1's)
 
 ###Increment:
 	incr(i) 
@@ -22,7 +22,11 @@ subtracts 1 from i
 
 ###Assignment:
 	a = i
-creates a new variable a equal to i, you cannot assign to an existing variable
+creates a new variable a equal to i, you cannot assign to an existing variable.
+
+###Assignment with Allocation
+	a = i,5
+creates a new variable a equal to i, with 5 extra bits.
 
 ##Syntax of the Output
 [current_state],[current_symbol]

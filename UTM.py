@@ -77,42 +77,42 @@ def copyV(opos, newpos, nextstate, i):
     outStr += moveV(opos,"startcvc0"+str(i),"-","c0m"+str(i))
     curPos = newpos+1
     outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
-    if newpos > opos:
-        outStr += "startcv"+str(i)+",_\n"
-        outStr += nextstate+",_,>\n\n"
-        outStr += "startcv"+str(i)+",0\n"
-        outStr += "copyright"+str(newpos-opos)+"cv"+str(i)+"c0,_,>\n\n"
-        outStr += "startcv"+str(i)+",1\n"
-        outStr += "copyright"+str(newpos-opos)+"cv"+str(i)+"c1,_,>\n\n"
-        outStr += "startcvc0"+str(i)+",_\n"
-        outStr += "startcv"+str(i)+",0,>\n\n"
-        outStr += "startcvc1"+str(i)+",_\n"
-        outStr += "startcv"+str(i)+",1,>\n\n"
-        outStr += "copyright0cv"+str(i)+"c1,_\n"
-        outStr += "startc1m"+str(i)+",1,<\n\n"
-        outStr += "copyright0cv"+str(i)+"c1,0\n"
-        outStr += "copyright0cv"+str(i)+"c1,0,>\n\n"
-        outStr += "copyright0cv"+str(i)+"c1,1\n"
-        outStr += "copyright0cv"+str(i)+"c1,1,>\n\n"
-        outStr += "copyright0cv"+str(i)+"c0,_\n"
-        outStr += "startc0m"+str(i)+",0,<\n\n"
-        outStr += "copyright0cv"+str(i)+"c0,0\n"
-        outStr += "copyright0cv"+str(i)+"c0,0,>\n\n"
-        outStr += "copyright0cv"+str(i)+"c0,1\n"
-        outStr += "copyright0cv"+str(i)+"c0,1,>\n\n"
-        for j in range(1,newpos-opos+1):
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c1,_\n"
-            outStr += "copyright"+str(j-1)+"cv"+str(i)+"c1,_,>\n\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c1,0\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c1,0,>\n\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c1,1\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c1,1,>\n\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c0,_\n"
-            outStr += "copyright"+str(j-1)+"cv"+str(i)+"c0,_,>\n\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c0,0\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c0,0,>\n\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c0,1\n"
-            outStr += "copyright"+str(j)+"cv"+str(i)+"c0,1,>\n\n"
+
+    outStr += "startcv"+str(i)+",_\n"
+    outStr += nextstate+",_,>\n\n"
+    outStr += "startcv"+str(i)+",0\n"
+    outStr += "copyright"+str(newpos-opos)+"cv"+str(i)+"c0,_,>\n\n"
+    outStr += "startcv"+str(i)+",1\n"
+    outStr += "copyright"+str(newpos-opos)+"cv"+str(i)+"c1,_,>\n\n"
+    outStr += "startcvc0"+str(i)+",_\n"
+    outStr += "startcv"+str(i)+",0,>\n\n"
+    outStr += "startcvc1"+str(i)+",_\n"
+    outStr += "startcv"+str(i)+",1,>\n\n"
+    outStr += "copyright0cv"+str(i)+"c1,_\n"
+    outStr += "startc1m"+str(i)+",1,<\n\n"
+    outStr += "copyright0cv"+str(i)+"c1,0\n"
+    outStr += "copyright0cv"+str(i)+"c1,0,>\n\n"
+    outStr += "copyright0cv"+str(i)+"c1,1\n"
+    outStr += "copyright0cv"+str(i)+"c1,1,>\n\n"
+    outStr += "copyright0cv"+str(i)+"c0,_\n"
+    outStr += "startc0m"+str(i)+",0,<\n\n"
+    outStr += "copyright0cv"+str(i)+"c0,0\n"
+    outStr += "copyright0cv"+str(i)+"c0,0,>\n\n"
+    outStr += "copyright0cv"+str(i)+"c0,1\n"
+    outStr += "copyright0cv"+str(i)+"c0,1,>\n\n"
+    for j in range(1,newpos-opos+1):
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,_\n"
+        outStr += "copyright"+str(j-1)+"cv"+str(i)+"c1,_,>\n\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,0\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,0,>\n\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,1\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,1,>\n\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,_\n"
+        outStr += "copyright"+str(j-1)+"cv"+str(i)+"c0,_,>\n\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,0\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,0,>\n\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,1\n"
+        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,1,>\n\n"
     curPos = opos+1
     return outStr
     
@@ -205,6 +205,7 @@ for lineno in range(len(inLines)):
                             out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"end",i))
                         else:
                             out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
+                        i+=1
                         continue
                     else:
                         raise NameError(variable.split(',')[0]+" is not a defined variable")
@@ -236,6 +237,6 @@ for lineno in range(len(inLines)):
         if lineno == len(inLines)-1:
             out.write(functions[function](variables[variable], "end", "end", i))
         else:
-            out.write(functions[function](variables[variable], "start"+str(i+1), "start"+str(loop[1]), i))
+            out.write(functions[function](variables[variable], "start"+str(i+1), "start"+str(i+1), i))
     i += 1
     
