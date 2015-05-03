@@ -12,7 +12,7 @@ Variables are local to the block(loop), they are deleted upon exit and can then 
 	while i decr {
 		...
 	}
-Means while i does not overflow subtract one then do the block. For increment it is while i is not all ones. Both flip the bits when done(incr end with all 0's decr all 1's). Can only be nested two deep.
+Means while i does not overflow subtract one then do the block. For increment it is while i is not all ones. Both flip the bits when done(incr end with all 0's decr all 1's). Can be nested arbitrarily deep
 
 ###Increment:
 	incr(i) 

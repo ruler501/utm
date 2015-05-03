@@ -16,6 +16,7 @@ moveleft{{i}}mv{{j}},1,<\n\n"""
 
 variables = {'i': 0}
 curPos = 0
+popped = []
 
 def moveV(pos,nextstate,movedirection,i):
     global curPos
@@ -314,6 +315,15 @@ def deleteVar(pos,nextstate,i):
     outStr += "startd"+str(i)+",_,<\n\n"
     curPos = pos
     return outStr
+    
+def passThrough(nextstate,i):
+    outStr = "start"+str(i)+",_\n"
+    outStr += nextstate+",_,-\n\n"
+    outStr += "start"+str(i)+",0\n"
+    outStr += nextstate+",0,-\n\n"
+    outStr += "start"+str(i)+",1\n"
+    outStr += nextstate+",1,-\n\n"
+    return outStr
 
 def increment(pos,nextstate,errorstate,i):
     global curPos
@@ -392,192 +402,198 @@ def firstOne(pos,nextstate,errorstate,i):
     ourStr += "startp"+str(i)+",_\n"
     ourStr += errorstate+",_,<\n\n"
     
-inFile = open("UTM.utm")
-out = open("UTM.utmo","w")
-functions = {'incr': increment, 'decr': decrement, "pop": pop, "first": firstOne}
-popped = []
-inLines=inFile.readlines()#[:-1]
+def main(argv=None):
+    inFile = open("UTM.utm")
+    out = open("UTM.utmo","w")
+    functions = {'incr': increment, 'decr': decrement, "pop": pop, "first": firstOne}
+    inLines=inFile.readlines()
 
-out.write("name: Auto-Generated\ninit: start0\naccept: end\n\n")
+    out.write("name: Auto-Generated\ninit: start0\naccept: end\n\n")
 
-i=0
-whileLoops = deque()
-for lineno in range(len(inLines)):
-    line = inLines[lineno].strip()
-    if line == "}":
-        for loop in whileLoops:
-            if lineno == loop[2]+1:
-                loopVariables = {}
-                for var in loop[6]:
-                    loopVariables[var] = variables[var]
-                sorted_vars = sorted(loopVariables.items(),key=operator.itemgetter(1),reverse=True)
-                if len(sorted_vars) > 0:
-                    if len(sorted_vars) > 1:
-                        if loop[4] == "pop":
-                            curPos += 1
-                        out.write(deleteVar(sorted_vars[0][1], "start"+sorted_vars[1][0]+str(i), str(i)))
-                        if loop[4] == "pop":
-                            curPos += 1
-                        out.write(deleteVar(sorted_vars[-1][1], "startnp"+str(loop[1]), sorted_vars[-1][0]+str(i)))
-                        del variables[sorted_vars[0][0]]
-                        del variables[sorted_vars[-1][0]]
-                    else:
-                        if loop[4] == "pop":
-                            curPos += 1
-                        out.write(deleteVar(sorted_vars[0][1], "startnp"+str(loop[1]), str(i)))
-                    for var in range(1,len(sorted_vars)-1):
-                        if loop[4] == "pop":
-                            curPos += 1
-                        out.write(deleteVar(sorted_vars[var][1], "start"+sorted_vars[var+1][0]+str(i), sorted_vars[var][0]+str(i)))
-                        del variables[sorted_vars[var][0]]
-                curPos=loop[3]
-        i += 1
-        continue
-    if line[:5] == "while":
-        pieces = line.split()
-        if pieces[1] not in variables:
-            raise NameError(pieces[1]+" is not a defined variable")
-        vposition = variables[pieces[1]]    
-        function = pieces[2]
-        counter = pieces[3][:-1]
-        count = 1
-        nested = False
-        for endno in range(lineno+1,len(inLines)):
-            if '{' in inLines[endno]:
-                count += 1
-            if inLines[endno].strip() == "}":
-                count -= 1
-                if count == 0:
-                    for loop in whileLoops:
-                        if loop[1] < i and loop[2] > i:
-                            nested = True
-                    nested = True
-                    whileLoops.append([len(whileLoops), lineno, endno-1, vposition, function, nested, []])  
-                    if nested:
-                        if endno == len(inLines) - 1:
-                            out.write(functions[function](vposition, "start"+str(i+1), "end",i))
-                        else:
-                            out.write(functions[function](vposition, "start"+str(i+1), "start"+str(endno),i))
-                    curPos=vposition
-                    break
-        else:
-            raise SyntaxError("While loop never finished")
-        i+=1
-        continue
-    if "=" in line:
-        pieces = line.split("=")
-        variable = pieces[1]
-        for loop in whileLoops:
-            if i > loop[1] and i < loop[2] and loop[4]=="pop":
-                curPos -= 1
-        if variable not in variables:
-            if "," in variable:
-                try:
-                    allocatedSpace = int(variable.split(',')[1])
-                    if variable.split(',')[0] in variables:
-                        if pieces[0] not in variables:
-                            variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
-                            for loop in whileLoops:
-                                if i > loop[1] and i < loop[2]:
-                                    loop[6].append(pieces[0])
-                        if variable.split(',')[0] == pieces[0]:
-                            if i == len(inLines) - 1:
-                                out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
-                            else:
-                                out.write(copyVself(variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
-                        else:
-                            if i == len(inLines) - 1:
-                                out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"end",i))
-                            else:
-                                out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
-                        i+=1
-                        continue
-                    else:
-                        constant = int(variable.split(',')[0])
-                        if pieces[0] not in variables:
-                            variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
-                            for loop in whileLoops:
-                                if i > loop[1] and i < loop[2]:
-                                    loop[6].append(pieces[0])
-                        if lineno == len(inLines) - 1:
-                            out.write(outputConstant(variables[pieces[0]],"end",constant,i,allocatedSpace))
-                        else:
-                            out.write(outputConstant(variables[pieces[0]],"start"+str(i+1),constant,i,allocatedSpace))
-                        i+=1
-                        continue
-                        
-                except ValueError:
-                    raise NameError(variable+" is not a defined variable")
-            else:
-                raise NameError(variable+" is not a defined variable")
-        if pieces[0] not in variables:
-            variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
-            if lineno == len(inLines) - 1:
-                out.write(copyV(variables[variable],variables[pieces[0]],"end",i))
-            else:
-                out.write(copyV(variables[variable],variables[pieces[0]],"start"+str(i+1),i))
-        else:
-            if lineno == len(inLines) - 1:
-                out.write(copyOverV(variables[variable],variables[pieces[0]],"end",i))
-            else:
-                out.write(copyOverV(variables[variable],variables[pieces[0]],"start"+str(i+1),i))
-        i += 1
-        continue
-    function = line.split('(')[0]
-    variable = line.split('(')[1][:-1]
-    if variable not in variables:
-        raise NameError(variable+" is not a defined variable")
-    for loop in whileLoops:
-        if lineno == loop[2]:
-            if loop[5]:
-                if loop[4] == "pop":
-                    a = curPos
-                    if curPos <= loop[3]:
-                        curPos -= 1
-                    out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+    i=0
+    whileLoops = deque()
+    for lineno in range(len(inLines)):
+        line = inLines[lineno].strip()
+        if line == "}":
+            for loop in whileLoops:
+                if lineno == loop[2]+1:
+                    loopVariables = {}
                     for var in loop[6]:
-                        if variables[var] < curPos:
-                            curPos = variables[var]
-                    t = curPos
-                    out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
-                    curPos = t
-                    out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
-                else:
-                    out.write(functions[function](variables[variable], "startn"+str(loop[1]), "start"+str(loop[1]), i))
-                    out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
-                break
+                        loopVariables[var] = variables[var]
+                    sorted_vars = sorted(loopVariables.items(),key=operator.itemgetter(1),reverse=True)
+                    if len(sorted_vars) > 0:
+                        print(sorted_vars)
+                        if len(sorted_vars) > 1:
+                            if loop[4] == "pop":
+                                curPos += 1
+                            out.write(deleteVar(sorted_vars[0][1], "start"+sorted_vars[1][0]+str(i), str(i)))
+                            if loop[4] == "pop":
+                                curPos += 1
+                            out.write(deleteVar(sorted_vars[-1][1], "startn"+str(loop[1]), sorted_vars[-1][0]+str(i)))
+                            del variables[sorted_vars[0][0]]
+                            del variables[sorted_vars[-1][0]]
+                        else:
+                            if loop[4] == "pop":
+                                curPos += 1
+                            out.write(deleteVar(sorted_vars[0][1], "startn"+str(loop[1]), str(i)))
+                        for var in range(1,len(sorted_vars)-1):
+                            if loop[4] == "pop":
+                                curPos += 1
+                            out.write(deleteVar(sorted_vars[var][1], "start"+sorted_vars[var+1][0]+str(i), sorted_vars[var][0]+str(i)))
+                            del variables[sorted_vars[var][0]]
+                    else:
+                        out.write(passThrough("startn"+str(loop[1]),i))
+                    curPos=loop[3]
+            i += 1
+            continue
+        if line[:5] == "while":
+            pieces = line.split()
+            if pieces[1] not in variables:
+                raise NameError(pieces[1]+" is not a defined variable")
+            vposition = variables[pieces[1]]    
+            function = pieces[2]
+            counter = pieces[3][:-1]
+            count = 1
+            nested = False
+            for endno in range(lineno+1,len(inLines)):
+                if '{' in inLines[endno]:
+                    count += 1
+                if inLines[endno].strip() == "}":
+                    count -= 1
+                    if count == 0:
+                        for loop in whileLoops:
+                            if loop[1] < i and loop[2] > i:
+                                nested = True
+                        nested = True
+                        whileLoops.append([len(whileLoops), lineno, endno-1, vposition, function, nested, []])  
+                        if nested:
+                            if endno == len(inLines) - 1:
+                                out.write(functions[function](vposition, "start"+str(i+1), "end",i))
+                            else:
+                                out.write(functions[function](vposition, "start"+str(i+1), "start"+str(endno+1),i))
+                        curPos=vposition
+                        break
             else:
-                if loop[4] == "pop":
-                    a = curPos
-                    if curPos <= loop[3]:
-                        curPos -= 1
-                    out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
-                    t = curPos
-                    curPos = a
-                    if endno == len(inLines) - 1:
-                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
-                        curPos = t+1
-                        out.write(pope(loop[3], "start"+str(loop[1]+1), "end","np"+str(loop[1])))
-                    else:
-                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
-                        curPos = t+1
-                        out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
-                    break
-
+                raise SyntaxError("While loop never finished")
+            i+=1
+            continue
+        if "=" in line:
+            pieces = line.split("=")
+            variable = pieces[1]
+            for loop in whileLoops:
+                if i > loop[1] and i < loop[2] and loop[4]=="pop":
+                    curPos -= 1
+            if variable not in variables:
+                if "," in variable:
+                    try:
+                        allocatedSpace = int(variable.split(',')[1])
+                        if variable.split(',')[0] in variables:
+                            if pieces[0] not in variables:
+                                variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                                for loop in whileLoops:
+                                    if i > loop[1] and i < loop[2]:
+                                        loop[6].append(pieces[0])
+                            if variable.split(',')[0] == pieces[0]:
+                                if i == len(inLines) - 1:
+                                    out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
+                                else:
+                                    out.write(copyVself(variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
+                            else:
+                                if i == len(inLines) - 1:
+                                    out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"end",i))
+                                else:
+                                    out.write(copyVresize(variables[variable.split(',')[0]],variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
+                            i+=1
+                            continue
+                        else:
+                            constant = int(variable.split(',')[0])
+                            if pieces[0] not in variables:
+                                variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                                for loop in whileLoops:
+                                    if i > loop[1] and i < loop[2]:
+                                        loop[6].append(pieces[0])
+                            if lineno == len(inLines) - 1:
+                                out.write(outputConstant(variables[pieces[0]],"end",constant,i,allocatedSpace))
+                            else:
+                                out.write(outputConstant(variables[pieces[0]],"start"+str(i+1),constant,i,allocatedSpace))
+                            i+=1
+                            continue
+                            
+                    except ValueError:
+                        raise NameError(variable+" is not a defined variable")
                 else:
-                    out.write(functions[function](variables[variable], "start"+str(loop[1]), "start"+str(loop[1]), i))
-                    if endno == len(inLines) - 1:
-                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
-                    else:
-                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
-                    break
-    else:
+                    raise NameError(variable+" is not a defined variable")
+            if pieces[0] not in variables:
+                variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                if lineno == len(inLines) - 1:
+                    out.write(copyV(variables[variable],variables[pieces[0]],"end",i))
+                else:
+                    out.write(copyV(variables[variable],variables[pieces[0]],"start"+str(i+1),i))
+            else:
+                if lineno == len(inLines) - 1:
+                    out.write(copyOverV(variables[variable],variables[pieces[0]],"end",i))
+                else:
+                    out.write(copyOverV(variables[variable],variables[pieces[0]],"start"+str(i+1),i))
+            i += 1
+            continue
+        function = line.split('(')[0]
+        variable = line.split('(')[1][:-1]
+        if variable not in variables:
+            raise NameError(variable+" is not a defined variable")
         for loop in whileLoops:
-            if i > loop[1] and i < loop[2] and loop[4]=="pop":
-                curPos -= 1
-                print(curPos)
-        if lineno == len(inLines)-1:
-            out.write(functions[function](variables[variable], "end", "end", i))
+            if lineno == loop[2]:
+                if loop[5]:
+                    if loop[4] == "pop":
+                        a = curPos
+                        if curPos <= loop[3]:
+                            curPos -= 1
+                        out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+                        for var in loop[6]:
+                            if variables[var] < curPos:
+                                curPos = variables[var]
+                        #t = curPos
+                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                        #curPos = t
+                        #out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
+                    else:
+                        out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                    break
+                else:
+                    if loop[4] == "pop":
+                        a = curPos
+                        if curPos <= loop[3]:
+                            curPos -= 1
+                        out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+                        t = curPos
+                        curPos = a
+                        if endno == len(inLines) - 1:
+                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
+                            #curPos = t+1
+                            #out.write(pope(loop[3], "start"+str(loop[1]+1), "end","np"+str(loop[1])))
+                        else:
+                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
+                            #curPos = t+1
+                            #out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
+                        break
+
+                    else:
+                        out.write(functions[function](variables[variable], "start"+str(loop[1]), "start"+str(loop[1]), i))
+                        if endno == len(inLines) - 1:
+                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
+                        else:
+                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
+                        break
         else:
-            out.write(functions[function](variables[variable], "start"+str(i+1), "start"+str(i+1), i))
-    i += 1
+            for loop in whileLoops:
+                if i > loop[1] and i < loop[2] and loop[4]=="pop":
+                    curPos -= 1
+                    print(curPos)
+            if lineno == len(inLines)-1:
+                out.write(functions[function](variables[variable], "end", "end", i))
+            else:
+                out.write(functions[function](variables[variable], "start"+str(i+1), "start"+str(i+1), i))
+        i += 1
+
+if __name__ == "__main__":
+    main()

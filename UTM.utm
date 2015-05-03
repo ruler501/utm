@@ -1,4 +1,12 @@
+c=1,2
+d=0,2
 while i pop {
-    a=3,2
-    incr(a)
+    while d incr {
+        while c decr {
+            incr(i)
+        }
+        decr(c)
+    }
+    decr(i)
 }
+incr(c)
