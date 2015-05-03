@@ -1,19 +1,4 @@
-b=i
-c=0,2
-a=0,4
 while i pop {
-    a=a,1
-    incr(c)
+    a=3,2
+    incr(a)
 }
-d=b
-e=7,3
-f=e
-g=0,3
-while b decr {
-    f=e
-    while f decr {
-        incr(a)
-    }
-    incr(g)
-}
-incr(a)

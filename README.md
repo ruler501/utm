@@ -6,6 +6,8 @@ down to a Turing machine with the syntax of [Turing Machine Simulator](https://m
 ##Syntax of the Input
 on each line you can do one of 5 things, you can loop, increment a variable, decrement a variable, pop a digit, or create a copy of a variable
 
+Variables are local to the block(loop), they are deleted upon exit and can then be reused/resized.
+
 ###While loop:
 	while i decr {
 		...

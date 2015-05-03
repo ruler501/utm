@@ -303,6 +303,17 @@ def outputConstant(pos,nextstate,constant,i,width):
     curPos = pos
     return outStr
     
+def deleteVar(pos,nextstate,i):
+    global curPos
+    outStr = moveV(pos+1,"startd"+str(i),"<",i)
+    outStr += "startd"+str(i)+",_\n"
+    outStr += nextstate+",_,<\n\n"
+    outStr += "startd"+str(i)+",0\n"
+    outStr += "startd"+str(i)+",_,<\n\n"
+    outStr += "startd"+str(i)+",1\n"
+    outStr += "startd"+str(i)+",_,<\n\n"
+    curPos = pos
+    return outStr
 
 def increment(pos,nextstate,errorstate,i):
     global curPos
@@ -371,9 +382,19 @@ def pope(pos,nextstate,errorstate,i):
     curPos = pos
     return outStr
     
+def firstOne(pos,nextstate,errorstate,i):
+    global curPos
+    ourStr = moveV(pos,"startp"+str(i),">",i)
+    ourStr += "startp"+str(i)+",0\n"
+    ourStr += nextstate+",1,-\n\n"
+    ourStr += "startp"+str(i)+",1\n"
+    ourStr += "startp"+str(i)+",1,>\n\n"
+    ourStr += "startp"+str(i)+",_\n"
+    ourStr += errorstate+",_,<\n\n"
+    
 inFile = open("UTM.utm")
 out = open("UTM.utmo","w")
-functions = {'incr': increment, 'decr': decrement, "pop": pop}
+functions = {'incr': increment, 'decr': decrement, "pop": pop, "first": firstOne}
 popped = []
 inLines=inFile.readlines()#[:-1]
 
@@ -384,10 +405,33 @@ whileLoops = deque()
 for lineno in range(len(inLines)):
     line = inLines[lineno].strip()
     if line == "}":
-        i += 1
         for loop in whileLoops:
             if lineno == loop[2]+1:
+                loopVariables = {}
+                for var in loop[6]:
+                    loopVariables[var] = variables[var]
+                sorted_vars = sorted(loopVariables.items(),key=operator.itemgetter(1),reverse=True)
+                if len(sorted_vars) > 0:
+                    if len(sorted_vars) > 1:
+                        if loop[4] == "pop":
+                            curPos += 1
+                        out.write(deleteVar(sorted_vars[0][1], "start"+sorted_vars[1][0]+str(i), str(i)))
+                        if loop[4] == "pop":
+                            curPos += 1
+                        out.write(deleteVar(sorted_vars[-1][1], "startnp"+str(loop[1]), sorted_vars[-1][0]+str(i)))
+                        del variables[sorted_vars[0][0]]
+                        del variables[sorted_vars[-1][0]]
+                    else:
+                        if loop[4] == "pop":
+                            curPos += 1
+                        out.write(deleteVar(sorted_vars[0][1], "startnp"+str(loop[1]), str(i)))
+                    for var in range(1,len(sorted_vars)-1):
+                        if loop[4] == "pop":
+                            curPos += 1
+                        out.write(deleteVar(sorted_vars[var][1], "start"+sorted_vars[var+1][0]+str(i), sorted_vars[var][0]+str(i)))
+                        del variables[sorted_vars[var][0]]
                 curPos=loop[3]
+        i += 1
         continue
     if line[:5] == "while":
         pieces = line.split()
@@ -407,12 +451,13 @@ for lineno in range(len(inLines)):
                     for loop in whileLoops:
                         if loop[1] < i and loop[2] > i:
                             nested = True
-                    whileLoops.append((len(whileLoops), lineno, endno-1, vposition, function, nested))  
+                    nested = True
+                    whileLoops.append([len(whileLoops), lineno, endno-1, vposition, function, nested, []])  
                     if nested:
                         if endno == len(inLines) - 1:
                             out.write(functions[function](vposition, "start"+str(i+1), "end",i))
                         else:
-                            out.write(functions[function](vposition, "start"+str(i+1), "start"+str(endno+1),i))
+                            out.write(functions[function](vposition, "start"+str(i+1), "start"+str(endno),i))
                     curPos=vposition
                     break
         else:
@@ -421,9 +466,6 @@ for lineno in range(len(inLines)):
         continue
     if "=" in line:
         pieces = line.split("=")
-        if pieces[0] in variables:
-            pass
-            #raise NameError("Can't copy over an existing variable, "+pieces[0]+" already exists")
         variable = pieces[1]
         for loop in whileLoops:
             if i > loop[1] and i < loop[2] and loop[4]=="pop":
@@ -435,6 +477,9 @@ for lineno in range(len(inLines)):
                     if variable.split(',')[0] in variables:
                         if pieces[0] not in variables:
                             variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                            for loop in whileLoops:
+                                if i > loop[1] and i < loop[2]:
+                                    loop[6].append(pieces[0])
                         if variable.split(',')[0] == pieces[0]:
                             if i == len(inLines) - 1:
                                 out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
@@ -451,6 +496,9 @@ for lineno in range(len(inLines)):
                         constant = int(variable.split(',')[0])
                         if pieces[0] not in variables:
                             variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                            for loop in whileLoops:
+                                if i > loop[1] and i < loop[2]:
+                                    loop[6].append(pieces[0])
                         if lineno == len(inLines) - 1:
                             out.write(outputConstant(variables[pieces[0]],"end",constant,i,allocatedSpace))
                         else:
@@ -483,12 +531,16 @@ for lineno in range(len(inLines)):
         if lineno == loop[2]:
             if loop[5]:
                 if loop[4] == "pop":
+                    a = curPos
                     if curPos <= loop[3]:
                         curPos -= 1
-                    out.write(functions[function](variables[variable], "startnp"+str(loop[1]), "startnp"+str(loop[1]), i))
+                    out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+                    for var in loop[6]:
+                        if variables[var] < curPos:
+                            curPos = variables[var]
                     t = curPos
                     out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
-                    curPos = t+1
+                    curPos = t
                     out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
                 else:
                     out.write(functions[function](variables[variable], "startn"+str(loop[1]), "start"+str(loop[1]), i))
@@ -499,7 +551,7 @@ for lineno in range(len(inLines)):
                     a = curPos
                     if curPos <= loop[3]:
                         curPos -= 1
-                    out.write(functions[function](variables[variable], "startnp"+str(loop[1]), "startnp"+str(loop[1]), i))
+                    out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
                     t = curPos
                     curPos = a
                     if endno == len(inLines) - 1:
