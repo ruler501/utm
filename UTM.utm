@@ -1,12 +1,15 @@
 c=1,2
-d=0,2
+d=2,2
 while i pop {
     while d incr {
         while c decr {
+            e=5,3
             incr(i)
         }
+        f=4,3
         decr(c)
     }
+    g=6,3
     decr(i)
 }
 incr(c)

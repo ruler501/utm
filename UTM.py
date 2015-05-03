@@ -403,6 +403,7 @@ def firstOne(pos,nextstate,errorstate,i):
     ourStr += errorstate+",_,<\n\n"
     
 def main(argv=None):
+    global curPos
     inFile = open("UTM.utm")
     out = open("UTM.utmo","w")
     functions = {'incr': increment, 'decr': decrement, "pop": pop, "first": firstOne}
@@ -422,23 +423,23 @@ def main(argv=None):
                         loopVariables[var] = variables[var]
                     sorted_vars = sorted(loopVariables.items(),key=operator.itemgetter(1),reverse=True)
                     if len(sorted_vars) > 0:
-                        print(sorted_vars)
                         if len(sorted_vars) > 1:
-                            if loop[4] == "pop":
-                                curPos += 1
+                            #if loop[4] == "pop":
+                            #    curPos += 1
                             out.write(deleteVar(sorted_vars[0][1], "start"+sorted_vars[1][0]+str(i), str(i)))
-                            if loop[4] == "pop":
-                                curPos += 1
+                            #if loop[4] == "pop":
+                           #     curPos += 1
                             out.write(deleteVar(sorted_vars[-1][1], "startn"+str(loop[1]), sorted_vars[-1][0]+str(i)))
                             del variables[sorted_vars[0][0]]
                             del variables[sorted_vars[-1][0]]
                         else:
-                            if loop[4] == "pop":
-                                curPos += 1
+                            #if loop[4] == "pop":
+                            #    curPos += 1
                             out.write(deleteVar(sorted_vars[0][1], "startn"+str(loop[1]), str(i)))
+                            del variables[sorted_vars[0][0]]
                         for var in range(1,len(sorted_vars)-1):
-                            if loop[4] == "pop":
-                                curPos += 1
+                            #if loop[4] == "pop":
+                             #   curPos += 1
                             out.write(deleteVar(sorted_vars[var][1], "start"+sorted_vars[var+1][0]+str(i), sorted_vars[var][0]+str(i)))
                             del variables[sorted_vars[var][0]]
                     else:
@@ -480,9 +481,9 @@ def main(argv=None):
         if "=" in line:
             pieces = line.split("=")
             variable = pieces[1]
-            for loop in whileLoops:
-                if i > loop[1] and i < loop[2] and loop[4]=="pop":
-                    curPos -= 1
+            #for loop in whileLoops:
+                #if i > loop[1] and i < loop[2] and loop[4]=="pop":
+                 #   curPos -= 1
             if variable not in variables:
                 if "," in variable:
                     try:
@@ -492,7 +493,12 @@ def main(argv=None):
                                 variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
                                 for loop in whileLoops:
                                     if i > loop[1] and i < loop[2]:
-                                        loop[6].append(pieces[0])
+                                        innerLoop=False
+                                        for loop2 in whileLoops:
+                                            if i > loop2[1] and i < loop2[2] and loop2[1] > loop[1]:
+                                                innerLoop = True
+                                        if not innerLoop:
+                                            loop[6].append(pieces[0])
                             if variable.split(',')[0] == pieces[0]:
                                 if i == len(inLines) - 1:
                                     out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
@@ -511,7 +517,12 @@ def main(argv=None):
                                 variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
                                 for loop in whileLoops:
                                     if i > loop[1] and i < loop[2]:
-                                        loop[6].append(pieces[0])
+                                        innerLoop=False
+                                        for loop2 in whileLoops:
+                                            if i > loop2[1] and i < loop2[2] and loop2[1] > loop[1]:
+                                                innerLoop = True
+                                        if not innerLoop:
+                                            loop[6].append(pieces[0])
                             if lineno == len(inLines) - 1:
                                 out.write(outputConstant(variables[pieces[0]],"end",constant,i,allocatedSpace))
                             else:
@@ -548,16 +559,25 @@ def main(argv=None):
                         if curPos <= loop[3]:
                             curPos -= 1
                         out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+                        t = curPos
+                        if len(loop[6]) > 0:
+                            curPos = max(variables.items(),key=operator.itemgetter(1))[1]+1
                         for var in loop[6]:
-                            if variables[var] < curPos:
-                                curPos = variables[var]
-                        #t = curPos
+                            if variables[var]-1 < curPos:
+                                curPos = variables[var]-1
                         out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
-                        #curPos = t
+                        curPos = t
                         #out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
                     else:
                         out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
+                        t = curPos
+                        if len(loop[6]) > 0:
+                            curPos = max(variables.items(),key=operator.itemgetter(1))[1]+1
+                        for var in loop[6]:
+                            if variables[var]-1 < curPos:
+                                curPos = variables[var]-1
                         out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                        curPos = t
                     break
                 else:
                     if loop[4] == "pop":
@@ -588,7 +608,6 @@ def main(argv=None):
             for loop in whileLoops:
                 if i > loop[1] and i < loop[2] and loop[4]=="pop":
                     curPos -= 1
-                    print(curPos)
             if lineno == len(inLines)-1:
                 out.write(functions[function](variables[variable], "end", "end", i))
             else:
