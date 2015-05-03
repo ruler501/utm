@@ -499,6 +499,7 @@ def main(argv=None):
                                                 innerLoop = True
                                         if not innerLoop:
                                             loop[6].append(pieces[0])
+                                            break
                             if variable.split(',')[0] == pieces[0]:
                                 if i == len(inLines) - 1:
                                     out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
@@ -523,6 +524,7 @@ def main(argv=None):
                                                 innerLoop = True
                                         if not innerLoop:
                                             loop[6].append(pieces[0])
+                                            break
                             if lineno == len(inLines) - 1:
                                 out.write(outputConstant(variables[pieces[0]],"end",constant,i,allocatedSpace))
                             else:
@@ -536,6 +538,15 @@ def main(argv=None):
                     raise NameError(variable+" is not a defined variable")
             if pieces[0] not in variables:
                 variables[pieces[0]] = max(variables.items(), key=operator.itemgetter(1))[1]+1
+                for loop in whileLoops:
+                    if i > loop[1] and i < loop[2]:
+                        innerLoop=False
+                        for loop2 in whileLoops:
+                            if i > loop2[1] and i < loop2[2] and loop2[1] > loop[1]:
+                                innerLoop = True
+                        if not innerLoop:
+                            loop[6].append(pieces[0])
+                            break
                 if lineno == len(inLines) - 1:
                     out.write(copyV(variables[variable],variables[pieces[0]],"end",i))
                 else:
@@ -556,8 +567,8 @@ def main(argv=None):
                 if loop[5]:
                     if loop[4] == "pop":
                         a = curPos
-                        if curPos <= loop[3]:
-                            curPos -= 1
+                        #if curPos <= loop[3]:
+                        #    curPos -= 1
                         out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
                         t = curPos
                         if len(loop[6]) > 0:
@@ -605,9 +616,9 @@ def main(argv=None):
                             out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
                         break
         else:
-            for loop in whileLoops:
-                if i > loop[1] and i < loop[2] and loop[4]=="pop":
-                    curPos -= 1
+            #for loop in whileLoops:
+            #    if i > loop[1] and i < loop[2] and loop[4]=="pop":
+            #        curPos -= 1
             if lineno == len(inLines)-1:
                 out.write(functions[function](variables[variable], "end", "end", i))
             else:
