@@ -16,4 +16,4 @@ while b decr {
     }
     incr(g)
 }
-incr(a)
+incr(g)

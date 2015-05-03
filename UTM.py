@@ -15,7 +15,6 @@ moveleft{{i}}mv{{j}},1
 moveleft{{i}}mv{{j}},1,<\n\n"""
 
 variables = {'i': 0}
-#validVariables = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 curPos = 0
 
 def moveV(pos,nextstate,movedirection,i):
@@ -65,80 +64,6 @@ def moveV(pos,nextstate,movedirection,i):
         outStr += "start"+str(i)+",0,<\n\n"
         outStr += "start"+str(i)+",1\n"
         outStr += "start"+str(i)+",1,<\n\n"
-    curPos = pos
-    return outStr
-
-def moveHeadV(pos,nextstate,movedirection,i):
-    global curPos
-    outStr = ""
-    if pos > 0:
-        if pos> 1:
-            outStr += "moveright0mv"+str(i)+",_\n"
-            outStr += nextstate+",_,"+movedirection+'\n\n'
-            outStr += "moveright0mv"+str(i)+",0\n"
-            outStr += nextstate+",0,"+movedirection+'\n\n'
-            outStr += "moveright0mv"+str(i)+",1\n"
-            outStr += nextstate+",1,"+movedirection+'\n\n'
-        for j in range(1,pos):
-            outStr += "moveright"+str(j)+"mv"+str(i)+",_\n"
-            outStr += "moveright"+str(j-1)+"mv"+str(i)+',_,>\n\n'
-            outStr += "moveright"+str(j)+"mv"+str(i)+",0\n"
-            outStr += "moveright"+str(j-1)+"mv"+str(i)+',0,>\n\n'
-            outStr += "moveright"+str(j)+"mv"+str(i)+",1\n"
-            outStr += "moveright"+str(j-1)+"mv"+str(i)+',1,>\n\n'
-        outStr += "start"+str(i)+",_\n"
-        if pos > 1:
-            outStr += "moveright"+str(pos-2)+"mv"+str(i)+",_,>\n\n"
-        else:
-            outStr += nextstate+",_,"+movedirection+'\n\n'
-        outStr += "start"+str(i)+",0\n"
-        if pos > 1:
-            outStr += "moveright"+str(pos-2)+"mv"+str(i)+",0,>\n\n"
-        else:
-            outStr += nextstate+",0,"+movedirection+'\n\n'
-        outStr += "start"+str(i)+",1\n"
-        if pos > 1:
-            outStr += "moveright"+str(pos-2)+"mv"+str(i)+",1,>\n\n"
-        else:
-            outStr += nextstate+",,"+movedirection+'\n\n'
-    elif pos < 0:
-        curPos += 1
-        if -pos > 1:
-            outStr += "moveleft0mv"+str(i)+",_\n"
-            outStr += nextstate+",_,"+movedirection+'\n\n'
-            outStr += "moveleft0mv"+str(i)+",0\n"
-            outStr += nextstate+",0,"+movedirection+'\n\n'
-            outStr += "moveleft0mv"+str(i)+",1\n"
-            outStr += nextstate+",1,"+movedirection+'\n\n'
-        for j in range(1,-pos):
-            outStr += "moveleft"+str(j)+"mv"+str(i)+",_\n"
-            outStr += "moveleft"+str(j-1)+"mv"+str(i)+',_,<\n\n'
-            outStr += "moveleft"+str(j)+"mv"+str(i)+",0\n"
-            outStr += "moveleft"+str(j-1)+"mv"+str(i)+',0,<\n\n'
-            outStr += "moveleft"+str(j)+"mv"+str(i)+",1\n"
-            outStr += "moveleft"+str(j-1)+"mv"+str(i)+',1,<\n\n'
-        outStr += "start"+str(i)+",_\n"
-        if -pos > 1:
-            outStr += "moveleft"+str(-pos-2)+"mv"+str(i)+",_,<\n\n"
-        else:
-            outStr += nextstate+",_,"+movedirection+'\n\n'
-        outStr += "start"+str(i)+",0\n"
-        if -pos > 1:
-            outStr += "moveleft"+str(-pos-2)+"mv"+str(i)+",0,<\n\n"
-        else:
-            outStr += nextstate+",0,"+movedirection+'\n\n'
-        outStr += "start"+str(i)+",1\n"
-        if -pos > 1:
-            outStr += "moveleft"+str(-pos-2)+"mv"+str(i)+",1,<\n\n"
-        else:
-            outStr += nextstate+",1,"+movedirection+'\n\n'
-    else:
-        outStr += "start"+str(i)+",_\n"
-        outStr += nextstate+",_,"+movedirection+"\n\n"
-        outStr += "start"+str(i)+",0\n"
-        outStr += nextstate+",0,"+movedirection+"\n\n"
-        outStr += "start"+str(i)+",1\n"
-        outStr += nextstate+",1,"+movedirection+"\n\n"
     curPos = pos
     return outStr
 
@@ -500,6 +425,9 @@ for lineno in range(len(inLines)):
             pass
             #raise NameError("Can't copy over an existing variable, "+pieces[0]+" already exists")
         variable = pieces[1]
+        for loop in whileLoops:
+            if i > loop[1] and i < loop[2] and loop[4]=="pop":
+                curPos -= 1
         if variable not in variables:
             if "," in variable:
                 try:
@@ -511,7 +439,6 @@ for lineno in range(len(inLines)):
                             if i == len(inLines) - 1:
                                 out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
                             else:
-                                print(variables[pieces[0]])
                                 out.write(copyVself(variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
                         else:
                             if i == len(inLines) - 1:
@@ -551,17 +478,13 @@ for lineno in range(len(inLines)):
     function = line.split('(')[0]
     variable = line.split('(')[1][:-1]
     if variable not in variables:
-        for loop in whileLoops:
-            if loop[3]+variable in variables:
-                variable = loop[3]+variable
-                break
-        else:
-            raise NameError(variable+" is not a defined variable")
+        raise NameError(variable+" is not a defined variable")
     for loop in whileLoops:
         if lineno == loop[2]:
             if loop[5]:
                 if loop[4] == "pop":
-                    curPos -= 1
+                    if curPos <= loop[3]:
+                        curPos -= 1
                     out.write(functions[function](variables[variable], "startnp"+str(loop[1]), "startnp"+str(loop[1]), i))
                     t = curPos
                     out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
@@ -573,9 +496,12 @@ for lineno in range(len(inLines)):
                 break
             else:
                 if loop[4] == "pop":
-                    curPos -= 1
+                    a = curPos
+                    if curPos <= loop[3]:
+                        curPos -= 1
                     out.write(functions[function](variables[variable], "startnp"+str(loop[1]), "startnp"+str(loop[1]), i))
                     t = curPos
+                    curPos = a
                     if endno == len(inLines) - 1:
                         out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
                         curPos = t+1
@@ -594,6 +520,10 @@ for lineno in range(len(inLines)):
                         out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
                     break
     else:
+        for loop in whileLoops:
+            if i > loop[1] and i < loop[2] and loop[4]=="pop":
+                curPos -= 1
+                print(curPos)
         if lineno == len(inLines)-1:
             out.write(functions[function](variables[variable], "end", "end", i))
         else:
