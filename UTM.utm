@@ -1,5 +1,7 @@
-a=0,5
+b=i
+c=0,2
+a=0,2
 while i pop {
-    incr(a)
+    a=a,2
+    incr(c)
 }
-incr(a)
