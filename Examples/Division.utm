@@ -22,7 +22,6 @@ while i decr {
     b=b,0
     while xnH pop {
         b=b,1
-        incr(t)
     }
     xnH2=xn
     while xnH2 decr {

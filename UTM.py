@@ -20,13 +20,15 @@ popped = []
 
 def moveV(pos,nextstate,movedirection,i):
     global curPos
+    if "26" in str(i):
+        print(pos,curPos,i)
     outStr = ""
     if pos > curPos:
         if pos - curPos > 1:
             outStr += "moveright0mv"+str(i)+",_\n"
             outStr += nextstate+",_,"+movedirection+'\n\n'
             outStr += moveright.replace("{{i}}","0").replace("{{j}}",str(i))
-        for j in range(1,pos-curPos):
+        for j in range(1,pos-curPos-1):
             outStr += "moveright"+str(j)+"mv"+str(i)+",_\n"
             outStr += "moveright"+str(j-1)+"mv"+str(i)+',_,>\n\n'
             outStr += moveright.replace("{{i}}",str(j)).replace("{{j}}",str(i))
@@ -45,7 +47,7 @@ def moveV(pos,nextstate,movedirection,i):
             outStr += "moveleft0mv"+str(i)+",_\n"
             outStr += nextstate+",_,"+movedirection+'\n\n'
             outStr += moveleft.replace("{{i}}","0").replace("{{j}}",str(i))
-        for j in range(1,curPos-pos):
+        for j in range(1,curPos-pos-1):
             outStr += "moveleft"+str(j)+"mv"+str(i)+",_\n"
             outStr += "moveleft"+str(j-1)+"mv"+str(i)+',_,<\n\n'
             outStr += moveleft.replace("{{i}}",str(j)).replace("{{j}}",str(i))
@@ -171,10 +173,10 @@ def copyV(opos, newpos, nextstate, i):
         outStr = moveV(opos,"startcv"+str(i),">",i)
     elif opos > curPos:
         outStr = moveV(opos,"startcv"+str(i),">",i)
-    curPos = newpos+1
-    outStr += moveV(opos+1,"startcvc0"+str(i),"-","c0m"+str(i))
-    curPos = newpos+1
-    outStr += moveV(opos+1,"startcvc1"+str(i),"-","c1m"+str(i))
+    curPos = newpos
+    outStr += moveV(opos,"startcvc0"+str(i),"-","c0m"+str(i))
+    curPos = newpos
+    outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
 
     outStr += "startcv"+str(i)+",_\n"
     outStr += nextstate+",_,>\n\n"
@@ -284,9 +286,15 @@ def outputConstant(pos,nextstate,constant,i,width):
     else:
         outStr += nextstate+","+b[0]+",-\n\n"
     outStr += "starto"+str(i)+",0\n"
-    outStr += "output1c"+b[1]+str(i)+","+b[0]+",>\n\n"
+    if len(b) > 1:
+        outStr += "output1c"+b[1]+str(i)+","+b[0]+",>\n\n"
+    else:
+        outStr += nextstate+","+b[0]+",-\n\n"
     outStr += "starto"+str(i)+",1\n"
-    outStr += "output1c"+b[1]+str(i)+","+b[0]+",>\n\n"
+    if len(b) > 1:
+        outStr += "output1c"+b[1]+str(i)+","+b[0]+",>\n\n"
+    else:
+        outStr += nextstate+","+b[0]+",-\n\n"
     for j in range(1,len(b)-1):
         outStr += "output"+str(j)+"c"+b[j]+str(i)+",_\n"
         outStr += "output"+str(j+1)+"c"+b[j+1]+str(i)+","+b[j]+",>\n\n"
@@ -386,10 +394,10 @@ def pope(pos,nextstate,errorstate,i):
     outStr += "checkp"+str(i)+",_\n"
     outStr += errorstate+",_,>\n\n"
     outStr += "checkp"+str(i)+",0\n"
-    outStr += nextstate+",0,-\n\n"
+    outStr += nextstate+",0,>\n\n"
     outStr += "checkp"+str(i)+",1\n"
-    outStr += nextstate+",1,-\n\n"
-    curPos = pos
+    outStr += nextstate+",1,>\n\n"
+    curPos = pos+1
     return outStr
     
 def firstOne(pos,nextstate,errorstate,i):
@@ -401,6 +409,7 @@ def firstOne(pos,nextstate,errorstate,i):
     ourStr += "startp"+str(i)+",1,>\n\n"
     ourStr += "startp"+str(i)+",_\n"
     ourStr += errorstate+",_,<\n\n"
+    return ourStr
     
 def main(argv=None):
     global curPos
@@ -415,6 +424,7 @@ def main(argv=None):
     whileLoops = deque()
     for lineno in range(len(inLines)):
         line = inLines[lineno].strip()
+        print(i,curPos)
         if line == "}":
             for loop in whileLoops:
                 if lineno == loop[2]+1:
@@ -444,7 +454,10 @@ def main(argv=None):
                             del variables[sorted_vars[var][0]]
                     else:
                         out.write(passThrough("startn"+str(loop[1]),i))
-                    curPos=loop[3]
+                    if loop[4] != "pop":
+                        curPos=loop[3]
+                    else:
+                        curPos=loop[3]+1
             i += 1
             continue
         if line[:5] == "while":
@@ -547,6 +560,8 @@ def main(argv=None):
                         if not innerLoop:
                             loop[6].append(pieces[0])
                             break
+                if i == 26:
+                    print(curPos,variables[pieces[0]],variables[variable])
                 if lineno == len(inLines) - 1:
                     out.write(copyV(variables[variable],variables[pieces[0]],"end",i))
                 else:
@@ -576,7 +591,8 @@ def main(argv=None):
                         for var in loop[6]:
                             if variables[var]-1 < curPos:
                                 curPos = variables[var]-1
-                        out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                        out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                        #if len(loop[6]) > 0:
                         curPos = t
                         #out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
                     else:
@@ -588,33 +604,9 @@ def main(argv=None):
                             if variables[var]-1 < curPos:
                                 curPos = variables[var]-1
                         out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"n"+str(loop[1])))
+                        #if len(loop[6]) > 0:
                         curPos = t
                     break
-                else:
-                    if loop[4] == "pop":
-                        a = curPos
-                        if curPos <= loop[3]:
-                            curPos -= 1
-                        out.write(functions[function](variables[variable], "start"+str(loop[2]+1), "start"+str(loop[2]+1), i))
-                        t = curPos
-                        curPos = a
-                        if endno == len(inLines) - 1:
-                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
-                            #curPos = t+1
-                            #out.write(pope(loop[3], "start"+str(loop[1]+1), "end","np"+str(loop[1])))
-                        else:
-                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
-                            #curPos = t+1
-                            #out.write(pope(loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),"np"+str(loop[1])))
-                        break
-
-                    else:
-                        out.write(functions[function](variables[variable], "start"+str(loop[1]), "start"+str(loop[1]), i))
-                        if endno == len(inLines) - 1:
-                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "end",loop[1]))
-                        else:
-                            out.write(functions[loop[4]](loop[3], "start"+str(loop[1]+1), "start"+str(loop[2]+2),loop[1]))
-                        break
         else:
             #for loop in whileLoops:
             #    if i > loop[1] and i < loop[2] and loop[4]=="pop":
