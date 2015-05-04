@@ -20,8 +20,6 @@ popped = []
 
 def moveV(pos,nextstate,movedirection,i):
     global curPos
-    if "26" in str(i):
-        print(pos,curPos,i)
     outStr = ""
     if pos > curPos:
         if pos - curPos > 1:
@@ -256,6 +254,8 @@ def copyVresize(opos, newpos, resize, nextstate, i):
 
 def copyVself(opos, resize, nextstate, i):
     global curPos
+    if resize > 0:
+        return inPlaceExpand(opos,resize,nextstate,i)
     outStr = moveV(opos,"startcvs"+str(i),">",i)
     outStr += "startcvs"+str(i)+",0\n"
     outStr += "startcvs"+str(i)+",0,>\n\n"
@@ -274,6 +274,93 @@ def copyVself(opos, resize, nextstate, i):
             outStr += nextstate+",_,<\n\n"
         else:
             outStr += nextstate+",0,-\n\n"
+    return outStr
+
+def inPlaceExpand(opos, resize, nextstate, i):
+    global curPos
+    outStr = moveV(max(variables.values())+1,"checkvalue"+str(max(variables.values())-opos)+"s"+str(i),"<",i)
+    for k in range(1,max(variables.values())-opos+1):
+        outStr += "checkvalue"+str(k)+"s"+str(i)+",_\n"
+        outStr += "copyright"+str(k)+"s"+str(resize-1)+"_"+str(i)+",_,>\n\n"
+        outStr += "checkvalue"+str(k)+"s"+str(i)+",0\n"
+        outStr += "copyright"+str(k)+"s"+str(resize-1)+"0"+str(i)+",0,>\n\n"
+        outStr += "checkvalue"+str(k)+"s"+str(i)+",1\n"
+        outStr += "copyright"+str(k)+"s"+str(resize-1)+"1"+str(i)+",1,>\n\n"
+        for c in ('_',"0",'1'):
+            for j in range(1,resize):
+                outStr += "copyright"+str(k)+"s"+str(j)+c+str(i)+",_\n"
+                outStr += "copyright"+str(k)+"s"+str(j-1)+c+str(i)+",_,>\n\n"
+                outStr += "copyright"+str(k)+"s"+str(j)+c+str(i)+",0\n"
+                outStr += "copyright"+str(k)+"s"+str(j-1)+c+str(i)+",0,>\n\n"
+                outStr += "copyright"+str(k)+"s"+str(j)+c+str(i)+",1\n"
+                outStr += "copyright"+str(k)+"s"+str(j-1)+c+str(i)+",1,>\n\n"
+            outStr += "copyright"+str(k)+"s"+"0"+c+str(i)+",_\n"
+            outStr += "moveleft"+str(k)+"s"+str(resize)+"m"+str(i)+","+c+",<\n\n"
+            outStr += "copyright"+str(k)+"s"+"0"+c+str(i)+",0\n"
+            outStr += "moveleft"+str(k)+"s"+str(resize)+"m"+str(i)+","+c+",<\n\n"
+            outStr += "copyright"+str(k)+"s"+"0"+c+str(i)+",1\n"
+            outStr += "moveleft"+str(k)+"s"+str(resize)+"m"+str(i)+","+c+",<\n\n"
+        for j in range(1,resize+1):
+            outStr += "moveleft"+str(k)+"s"+str(j)+"m"+str(i)+",_\n"
+            outStr += "moveleft"+str(k)+"s"+str(j-1)+"m"+str(i)+",_,<\n\n"
+            outStr += "moveleft"+str(k)+"s"+str(j)+"m"+str(i)+",0\n"
+            outStr += "moveleft"+str(k)+"s"+str(j-1)+"m"+str(i)+",0,<\n\n"
+            outStr += "moveleft"+str(k)+"s"+str(j)+"m"+str(i)+",1\n"
+            outStr += "moveleft"+str(k)+"s"+str(j-1)+"m"+str(i)+",1,<\n\n"
+        outStr += "moveleft"+str(k)+"s"+"0m"+str(i)+",_\n"
+        outStr += "checkvalue"+str(k-1)+"s"+str(i)+",_,-\n\n"
+        outStr += "moveleft"+str(k)+"s"+"0m"+str(i)+",0\n"
+        outStr += "checkvalue"+str(k)+"s"+str(i)+",0,-\n\n"
+        outStr += "moveleft"+str(k)+"s"+"0m"+str(i)+",1\n"
+        outStr += "checkvalue"+str(k)+"s"+str(i)+",1,-\n\n"
+
+    outStr += "checkvalue0s"+str(i)+",_\n"
+    outStr += "copyright0s"+str(resize-1)+"_"+str(i)+",_,>\n\n"
+    outStr += "checkvalue0s"+str(i)+",0\n"
+    outStr += "copyright0s"+str(resize-1)+"0"+str(i)+",0,>\n\n"
+    outStr += "checkvalue0s"+str(i)+",1\n"
+    outStr += "copyright0s"+str(resize-1)+"1"+str(i)+",1,>\n\n"
+    for c in ('_',"0",'1'):
+        for j in range(1,resize):
+            outStr += "copyright0s"+str(j)+c+str(i)+",_\n"
+            outStr += "copyright0s"+str(j-1)+c+str(i)+",_,>\n\n"
+            outStr += "copyright0s"+str(j)+c+str(i)+",0\n"
+            outStr += "copyright0s"+str(j-1)+c+str(i)+",0,>\n\n"
+            outStr += "copyright0s"+str(j)+c+str(i)+",1\n"
+            outStr += "copyright0s"+str(j-1)+c+str(i)+",1,>\n\n"
+        outStr += "copyright0s0"+c+str(i)+",_\n"
+        outStr += "moveleft0s"+str(resize)+"m"+str(i)+","+c+",<\n\n"
+        outStr += "copyright0s0"+c+str(i)+",0\n"
+        outStr += "moveleft0s"+str(resize)+"m"+str(i)+","+c+",<\n\n"
+        outStr += "copyright0s0"+c+str(i)+",1\n"
+        outStr += "moveleft0s"+str(resize)+"m"+str(i)+","+c+",<\n\n"
+    for j in range(1,resize+1):
+        outStr += "moveleft0s"+str(j)+"m"+str(i)+",_\n"
+        outStr += "moveleft0s"+str(j-1)+"m"+str(i)+",_,<\n\n"
+        outStr += "moveleft0s"+str(j)+"m"+str(i)+",0\n"
+        outStr += "moveleft0s"+str(j-1)+"m"+str(i)+",0,<\n\n"
+        outStr += "moveleft0s"+str(j)+"m"+str(i)+",1\n"
+        outStr += "moveleft0s"+str(j-1)+"m"+str(i)+",1,<\n\n"
+    outStr += "moveleft0s0m"+str(i)+",_\n"
+    outStr += "fillzeroes"+str(resize-1)+"d"+str(i)+",_,>\n\n"
+    outStr += "moveleft0s0m"+str(i)+",0\n"
+    outStr += "checkvalue0s"+str(i)+",0,-\n\n"
+    outStr += "moveleft0s0m"+str(i)+",1\n"
+    outStr += "checkvalue0s"+str(i)+",1,-\n\n"
+    for j in range(1,resize):
+        outStr += "fillzeroes"+str(j)+"d"+str(i)+",_\n"
+        outStr += "fillzeroes"+str(j-1)+"d"+str(i)+",0,>\n\n"
+        outStr += "fillzeroes"+str(j)+"d"+str(i)+",0\n"
+        outStr += "fillzeroes"+str(j-1)+"d"+str(i)+",0,>\n\n"
+        outStr += "fillzeroes"+str(j)+"d"+str(i)+",1\n"
+        outStr += "fillzeroes"+str(j-1)+"d"+str(i)+",0,>\n\n"
+    outStr += "fillzeroes0d"+str(i)+",_\n"
+    outStr += nextstate+",0,-\n\n"
+    outStr += "fillzeroes0d"+str(i)+",0\n"
+    outStr += nextstate+",0,-\n\n"
+    outStr += "fillzeroes0d"+str(i)+",1\n"
+    outStr += nextstate+",0,-\n\n"
+    curPos=opos
     return outStr
 
 def outputConstant(pos,nextstate,constant,i,width):
@@ -411,11 +498,22 @@ def firstOne(pos,nextstate,errorstate,i):
     ourStr += errorstate+",_,<\n\n"
     return ourStr
     
+def firstZero(pos,nextstate,errorstate,i):
+    global curPos
+    ourStr = moveV(pos,"startp"+str(i),">",i)
+    ourStr += "startp"+str(i)+",0\n"
+    ourStr += nextstate+",0,>\n\n"
+    ourStr += "startp"+str(i)+",1\n"
+    ourStr += "startp"+str(i)+",0,-\n\n"
+    ourStr += "startp"+str(i)+",_\n"
+    ourStr += errorstate+",_,<\n\n"
+    return ourStr
+    
 def main(argv=None):
     global curPos
     inFile = open("UTM.utm")
     out = open("UTM.utmo","w")
-    functions = {'incr': increment, 'decr': decrement, "pop": pop, "first": firstOne}
+    functions = {'incr': increment, 'decr': decrement, "pop": pop, "first": firstOne, "frost": firstZero}
     inLines=inFile.readlines()
 
     out.write("name: Auto-Generated\ninit: start0\naccept: end\n\n")
@@ -424,7 +522,6 @@ def main(argv=None):
     whileLoops = deque()
     for lineno in range(len(inLines)):
         line = inLines[lineno].strip()
-        print(i,curPos)
         if line == "}":
             for loop in whileLoops:
                 if lineno == loop[2]+1:
@@ -515,7 +612,7 @@ def main(argv=None):
                                             break
                             if variable.split(',')[0] == pieces[0]:
                                 if i == len(inLines) - 1:
-                                    out.write(copyVself(variables[pieces[0]],variables[variable.split(',')[0]],allocatedSpace,"end",i))
+                                    out.write(copyVself(variables[pieces[0]],allocatedSpace,"end",i))
                                 else:
                                     out.write(copyVself(variables[pieces[0]],allocatedSpace,"start"+str(i+1),i))
                             else:
@@ -560,8 +657,6 @@ def main(argv=None):
                         if not innerLoop:
                             loop[6].append(pieces[0])
                             break
-                if i == 26:
-                    print(curPos,variables[pieces[0]],variables[variable])
                 if lineno == len(inLines) - 1:
                     out.write(copyV(variables[variable],variables[pieces[0]],"end",i))
                 else:

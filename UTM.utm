@@ -13,6 +13,7 @@ while i decr {
     }
     two=a
     two=two,2
+    two=two,0
     first(two)
     while a decr {
         decr(two)
@@ -22,8 +23,10 @@ while i decr {
     b=b,0
     while xnH pop {
         b=b,1
+        xn=xn,1
         incr(t)
     }
+    xn=xn,2
     xnH2=xn
     while xnH2 decr {
         p=two
@@ -32,4 +35,7 @@ while i decr {
         }
         incr(t)
     }
+    xn=b
+    incr(t)
 }
+incr(xn)
