@@ -71,97 +71,129 @@ def moveV(pos,nextstate,movedirection,i):
 def copyOverV(opos, newpos, nextstate, i):
     global curPos
     outStr = ""
-    if newpos <= curPos:
-        outStr = moveV(newpos,"startcve"+str(i),">",i)
-        curPos = newpos
-    else:
-        outStr = moveV(newpos,"startcve"+str(i),">",i)
-        curPos = newpos
+    outStr = moveV(newpos,"startcve"+str(i),">",i)
+    curPos = newpos
     if opos <= curPos:
         outStr += moveV(opos,"startcv"+str(i),">","r"+str(i))
     else:
         outStr += moveV(opos,"startcv"+str(i),">","r"+str(i))
     curPos = newpos
-    outStr += moveV(opos,"startcvc0"+str(i),"-","c0m"+str(i))
+    if opos <= newpos:
+        outStr += moveV(opos,"startcvc0"+str(i),"-","c0m"+str(i))
+    else:
+        outStr += moveV(opos+1,"startcvc0"+str(i),"-","c0m"+str(i))
     curPos = newpos
-    outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
+    if opos <= newpos:
+        outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
+    else:
+        outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
     
     outStr += "startcve"+str(i)+",0\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startr"+str(i)+",_,<\n\n"
     else:
         outStr += "startr"+str(i)+",_,>\n\n"
     outStr += "startcve"+str(i)+",1\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startr"+str(i)+",_,<\n\n"
     else:
         outStr += "startr"+str(i)+",_,>\n\n"
     outStr += "startcvec1"+str(i)+",_\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startc1m"+str(i)+",_,<\n\n"
     else:
         outStr += "startc1m"+str(i)+",_,>\n\n"
     outStr += "startcvec1"+str(i)+",0\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startc1m"+str(i)+",_,<\n\n"
     else:
         outStr += "startc1m"+str(i)+",_,>\n\n"
     outStr += "startcvec1"+str(i)+",1\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startc1m"+str(i)+",_,<\n\n"
     else:
         outStr += "startc1m"+str(i)+",_,>\n\n"
     outStr += "startcvec0"+str(i)+",_\n"
-    if opos <= curPos:
-        outStr += "startc1m"+str(i)+",_,<\n\n"
+    if opos <= newpos:
+        outStr += "startc0m"+str(i)+",_,<\n\n"
     else:
-        outStr += "startc1m"+str(i)+",_,>\n\n"
+        outStr += "startc0m"+str(i)+",_,>\n\n"
     outStr += "startcvec0"+str(i)+",0\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startc0m"+str(i)+",_,<\n\n"
     else:
         outStr += "startc0m"+str(i)+",_,>\n\n"
     outStr += "startcvec0"+str(i)+",1\n"
-    if opos <= curPos:
+    if opos <= newpos:
         outStr += "startc0m"+str(i)+",_,<\n\n"
     else:
         outStr += "startc0m"+str(i)+",_,>\n\n"
     outStr += "startcv"+str(i)+",_\n"
-    outStr += nextstate+",_,>\n\n"
+    outStr += nextstate+",_,<\n\n"
     outStr += "startcv"+str(i)+",0\n"
-    outStr += "copyright"+str(newpos-opos)+"cv"+str(i)+"c0,_,>\n\n"
+    if opos <= newpos:
+        outStr += "copyright"+str(abs(newpos-opos))+"cv"+str(i)+"c0,_,>\n\n"
+    else:
+        outStr += "copyright"+str(abs(newpos-opos))+"cv"+str(i)+"c0,_,<\n\n"
     outStr += "startcv"+str(i)+",1\n"
-    outStr += "copyright"+str(newpos-opos)+"cv"+str(i)+"c1,_,>\n\n"
+    if opos <= newpos:
+        outStr += "copyright"+str(abs(newpos-opos))+"cv"+str(i)+"c1,_,>\n\n"
+    else:
+        outStr += "copyright"+str(abs(newpos-opos))+"cv"+str(i)+"c1,_,<\n\n"
     outStr += "startcvc0"+str(i)+",_\n"
-    outStr += "startcv"+str(i)+",0,>\n\n"
+    if opos <= newpos:
+        outStr += "startcv"+str(i)+",0,>\n\n"
+    else:
+        outStr += "checkcvc0"+str(i)+",_,>\n\n"
     outStr += "startcvc1"+str(i)+",_\n"
-    outStr += "startcv"+str(i)+",1,>\n\n"
-    outStr += "copyright0cv"+str(i)+"c1,_\n"
-    outStr += "startcvec1"+str(i)+",1,>\n\n"
-    outStr += "copyright0cv"+str(i)+"c1,0\n"
-    outStr += "copyright0cv"+str(i)+"c1,0,>\n\n"
-    outStr += "copyright0cv"+str(i)+"c1,1\n"
-    outStr += "copyright0cv"+str(i)+"c1,1,>\n\n"
-    outStr += "copyright0cv"+str(i)+"c0,_\n"
-    outStr += "startcvec0"+str(i)+",0,>\n\n"
-    outStr += "copyright0cv"+str(i)+"c0,0\n"
-    outStr += "copyright0cv"+str(i)+"c0,0,>\n\n"
-    outStr += "copyright0cv"+str(i)+"c0,1\n"
-    outStr += "copyright0cv"+str(i)+"c0,1,>\n\n"
-    for j in range(1,newpos-opos+1):
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,_\n"
-        outStr += "copyright"+str(j-1)+"cv"+str(i)+"c1,_,>\n\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,0\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,0,>\n\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,1\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c1,1,>\n\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,_\n"
-        outStr += "copyright"+str(j-1)+"cv"+str(i)+"c0,_,>\n\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,0\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,0,>\n\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,1\n"
-        outStr += "copyright"+str(j)+"cv"+str(i)+"c0,1,>\n\n"
-    curPos = opos+1
+    if opos <= newpos:
+        outStr += "startcv"+str(i)+",1,>\n\n"
+    else:
+        outStr += "checkcvc1"+str(i)+",_,>\n\n"
+    for c in ('0','1'):
+        if newpos < opos:
+            outStr += "checkcvc"+c+str(i)+",_\n"
+            outStr += "mleft"+c+str(i)+",_,<\n\n"
+            outStr += "checkcvc"+c+str(i)+",0\n"
+            outStr += "writec"+c+str(i)+",0,<\n\n"
+            outStr += "checkcvc"+c+str(i)+",1\n"
+            outStr += "writec"+c+str(i)+",1,<\n\n"
+            outStr += "writec"+c+str(i)+",_\n"
+            outStr += "startcv"+str(i)+","+c+",>\n\n"
+            outStr += "mleft"+c+str(i)+",_\n"
+            outStr += "writec"+c+str(i)+",_,<\n\n"
+        outStr += "copyright0cv"+str(i)+"c"+c+",_\n"
+        if opos <= newpos:
+            outStr += "startcvec"+c+str(i)+","+c+",>\n\n"
+        else:
+            outStr += "startcvec"+c+str(i)+","+c+",>\n\n"
+        outStr += "copyright0cv"+str(i)+"c"+c+",0\n"
+        if opos <= newpos:
+            outStr += "copyright0cv"+str(i)+"c"+c+",0,>\n\n"
+        else:
+            outStr += "copyright0cv"+str(i)+"c"+c+",0,<\n\n"
+        outStr += "copyright0cv"+str(i)+"c"+c+",1\n"
+        if opos <= newpos:
+            outStr += "copyright0cv"+str(i)+"c"+c+",1,>\n\n"
+        else:
+            outStr += "copyright0cv"+str(i)+"c"+c+",1,<\n\n"
+        for j in range(1,abs(newpos-opos)+1):
+            outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",_\n"
+            if opos <= newpos:
+                outStr += "copyright"+str(j-1)+"cv"+str(i)+"c"+c+",_,>\n\n"
+            else:
+                outStr += "copyright"+str(j-1)+"cv"+str(i)+"c"+c+",_,<\n\n"
+            outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",0\n"
+            if opos <= newpos:
+                outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",0,>\n\n"
+            else:
+                outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",0,<\n\n"
+            outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",1\n"
+            if opos <= newpos:
+                outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",1,>\n\n"
+            else:
+                outStr += "copyright"+str(j)+"cv"+str(i)+"c"+c+",1,<\n\n"
+    curPos = opos
     return outStr
     
 def copyV(opos, newpos, nextstate, i):
