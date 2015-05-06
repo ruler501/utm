@@ -16,6 +16,7 @@ moveleft{{i}}mv{{j}},1,<\n\n"""
 
 variables = {'i': 0}
 curPos = 0
+whileLoops = deque()
 popped = []
 
 def moveV(pos,nextstate,movedirection,i):
@@ -440,7 +441,7 @@ def deleteVar(pos,nextstate,i):
     outStr += "startd"+str(i)+",_,<\n\n"
     outStr += "startd"+str(i)+",1\n"
     outStr += "startd"+str(i)+",_,<\n\n"
-    curPos = pos
+    curPos = pos-1
     return outStr
     
 def passThrough(nextstate,i):
@@ -498,7 +499,8 @@ def pop(pos,nextstate,errorstate,i):
         if popped[i] > pos:
             popped[i] += 1
     curPos = pos
-    popped.append(pos)
+    if pos != max(variables.values()):
+        popped.append(pos)
     return outStr
 
 def pope(pos,nextstate,errorstate,i):
@@ -553,34 +555,39 @@ def main(argv=None):
     out.write("name: Auto-Generated\ninit: start0\naccept: end\n\n")
 
     i=0
-    whileLoops = deque()
     for lineno in range(len(inLines)):
         line = inLines[lineno].strip()
         if line == "}":
             for loop in whileLoops:
                 if lineno == loop[2]+1:
                     loopVariables = {}
+                    j=0
                     for var in loop[6]:
+                        
+                        t = variables[var]
+                        for loop2 in whileLoops:
+                            if loop2[3]==variables[var] and loop2[4]=="pop":
+                                variables[var] += 1
+                                break
                         loopVariables[var] = variables[var]
+                        if t in popped:
+                            while "pv"+str(j) in variables:
+                                j += 1
+                            variables["pv"+str(j)] = t+1
+                            loopVariables["pv"+str(j)] = t+1
                     sorted_vars = sorted(loopVariables.items(),key=operator.itemgetter(1),reverse=True)
                     if len(sorted_vars) > 0:
                         if len(sorted_vars) > 1:
-                            #if loop[4] == "pop":
-                            #    curPos += 1
                             out.write(deleteVar(sorted_vars[0][1], "start"+sorted_vars[1][0]+str(i), str(i)))
-                            #if loop[4] == "pop":
-                           #     curPos += 1
+                            curPos = sorted_vars[-2][1]-1
                             out.write(deleteVar(sorted_vars[-1][1], "startn"+str(loop[1]), sorted_vars[-1][0]+str(i)))
                             del variables[sorted_vars[0][0]]
                             del variables[sorted_vars[-1][0]]
                         else:
-                            #if loop[4] == "pop":
-                            #    curPos += 1
                             out.write(deleteVar(sorted_vars[0][1], "startn"+str(loop[1]), str(i)))
                             del variables[sorted_vars[0][0]]
                         for var in range(1,len(sorted_vars)-1):
-                            #if loop[4] == "pop":
-                             #   curPos += 1
+                            curPos = sorted_vars[var-1][1]-1
                             out.write(deleteVar(sorted_vars[var][1], "start"+sorted_vars[var+1][0]+str(i), sorted_vars[var][0]+str(i)))
                             del variables[sorted_vars[var][0]]
                     else:
@@ -589,6 +596,7 @@ def main(argv=None):
                         curPos=loop[3]
                     else:
                         curPos=loop[3]+1
+                    break
             i += 1
             continue
         if line[:5] == "while":

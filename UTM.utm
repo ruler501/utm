@@ -1,11 +1,11 @@
-xn=1,2
+xn=1,3
 while i decr {
     xnH=xn
     a=xnH
     a=a,0
     t=0,1
     while xnH decr {
-        p=3,2
+        p=5,3
         while p decr {
             incr(a)
         }
@@ -38,4 +38,13 @@ while i decr {
     xn=b
     incr(t)
 }
-pop(xn)
+xnH=xn
+xnH=xnH,0
+while xn decr {
+    p=2,2
+    while p decr {
+        incr(xnH)
+    }
+    incr(p)
+}
+incr(xn)

@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 
 def showTape(tape,position):
@@ -10,6 +11,8 @@ def showTape(tape,position):
     return outStr
     
 def main(argv=None):
+    if argv==None:
+        argv = sys.argv
     tape = defaultdict(lambda: '_')
     states = defaultdict(lambda: defaultdict(lambda: ('reject','_','-')))
     movement = {'-': 0, '>': 1, '<': -1}
@@ -47,4 +50,4 @@ def main(argv=None):
     outFile.write('position='+str(position)+", current State="+str(curState)+", current character="+tape[position]+" tape:\n"+showTape(tape,position))
     
 if __name__ == "__main__":
-    main(['TuringSimulator.py','UTM.utmo','0001'])
+    main()
