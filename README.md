@@ -1,6 +1,6 @@
 # Universal Turing Machine
 
-Compiles a given program (with a still being determined syntax)
+Compiles a given program
 down to a Turing machine with the syntax of [Turing Machine Simulator](https://martinugarte.com/turingmachine/)
 
 ##Syntax of the Input
@@ -14,7 +14,7 @@ Variables are local to the block(loop), they are deleted upon exit and can then 
 	}
 Means while i does not overflow subtract one then do the block. Same for increment. Both flip the bits when done(incr end with all 0's decr all 1's). 
 For pop it is when it runs out of digits to remove, and for first it is when the number is all one's. Can be nested arbitrarily deep.
-Must end with a function call, cannot end with an assignment.
+Must end with a function call, cannot end with an assignment or another loop.
 
 ###Increment:
 	incr(i) 
@@ -38,17 +38,16 @@ changes the most significant 1 in i to a 0
 
 ###Assignment:
 	a = b
-creates a new variable a equal to i, you can assign to an existing variable, just don't overrun it's length which would cause undefined behavior. If variable a is defined before variable b
+creates a new variable a equal to i, you can assign to an existing variable, just don't overrun it's length which would cause undefined behavior unless it's the last variable created. If variable a is defined before variable b
 and b is not the last variable defined this causes undefined behavior
 
 ###Assignment with Allocation
 	a = i,5
-creates a new variable a equal to i, with 5 extra bits. If you assign a variable to itself it is zeroed out. Should only be used on the last variable declared,
-otherwise will overrun length causing undefined behavior
+creates a new variable a equal to i, with 5 extra bits. Can be used on any variable, expanding by 0 zeroes out the variable.
 
 ###Assignment of a Constant
     a = 35,6
-Creates a new variable a equal to 35%(2**6), in 6 bits, can be assigned to an existing variable, but again be careful to mind the length
+Creates a new variable a equal to 35%(2**6), in 6 bits, can be assigned to an existing variable, but again be careful to mind the length unless it is the last variable created.
 
 ##Syntax of the Output
     [current_state],[current_symbol]
