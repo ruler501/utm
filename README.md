@@ -32,8 +32,9 @@ removes the least significant bit from i
 changes the most significant 0 in i to a 1
 
 ###Assignment:
-	a = i
-creates a new variable a equal to i, you can assign to an existing variable, just don't overrun it's length which would cause undefined behavior
+	a = b
+creates a new variable a equal to i, you can assign to an existing variable, just don't overrun it's length which would cause undefined behavior. If variable a is defined before variable b
+and b is not the last variable defined this causes undefined behavior
 
 ###Assignment with Allocation
 	a = i,5

@@ -26,9 +26,9 @@ while i decr {
         xn=xn,1
         incr(t)
     }
-    xn=xn,2
-    xnH2=xn
-    while xnH2 decr {
+    pop(b)
+    xn=xn,1
+    while xn decr {
         p=two
         while p decr {
             incr(b)
@@ -38,4 +38,4 @@ while i decr {
     xn=b
     incr(t)
 }
-incr(xn)
+pop(xn)

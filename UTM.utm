@@ -1,3 +1,41 @@
-a=1,5
-b=0,5
-a=b
+xn=1,2
+while i decr {
+    xnH=xn
+    a=xnH
+    a=a,0
+    t=0,1
+    while xnH decr {
+        p=3,2
+        while p decr {
+            incr(a)
+        }
+        incr(t)
+    }
+    two=a
+    two=two,2
+    two=two,0
+    first(two)
+    while a decr {
+        decr(two)
+    }
+    xnH=xn
+    b=two
+    b=b,0
+    while xnH pop {
+        b=b,1
+        xn=xn,1
+        incr(t)
+    }
+    pop(b)
+    xn=xn,1
+    while xn decr {
+        p=two
+        while p decr {
+            incr(b)
+        }
+        incr(t)
+    }
+    xn=b
+    incr(t)
+}
+pop(xn)

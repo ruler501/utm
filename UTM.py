@@ -86,7 +86,7 @@ def copyOverV(opos, newpos, nextstate, i):
     if opos <= newpos:
         outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
     else:
-        outStr += moveV(opos,"startcvc1"+str(i),"-","c1m"+str(i))
+        outStr += moveV(opos+1,"startcvc1"+str(i),"-","c1m"+str(i))
     
     outStr += "startcve"+str(i)+",0\n"
     if opos <= newpos:
@@ -511,11 +511,13 @@ def pope(pos,nextstate,errorstate,i):
     outStr += "startp"+str(i)+",1\n"
     outStr += "checkp"+str(i)+",_,<\n\n"
     outStr += "checkp"+str(i)+",_\n"
-    outStr += errorstate+",_,>\n\n"
+    outStr += "mright"+str(i)+",_,>\n\n"
     outStr += "checkp"+str(i)+",0\n"
     outStr += nextstate+",0,>\n\n"
     outStr += "checkp"+str(i)+",1\n"
     outStr += nextstate+",1,>\n\n"
+    outStr += "mright"+str(i)+",_\n"
+    outStr += errorstate+",_,>\n\n"
     curPos = pos+1
     return outStr
     
